@@ -1,21 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Face Detection</title>
+    <link rel="stylesheet" href="/static/styles/style.css" />
+  </head>
 
-  <title>Face Detection</title>
-  <link rel="stylesheet" href="{{ url_for('static',filename='styles/style.css') }}">
-</head>
-
-<body>
-  <video id="video" width="720px" height="560px" autoplay muted></video>
-</body>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
-<script type="text/javascript" src="{{ url_for('static', filename = 'js/face-api.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename = 'js/index.js') }}"></script>
-
+  <body>
+    <div class="header">
+      <h1>
+        <i class="fas fa-smile"></i> Welcome, {{ current_user.username }}!
+      </h1>
+      <div class="nav-links">
+        <a href="{{ url_for('dashboard') }}"
+          ><i class="fas fa-chart-line"></i> Dashboard</a
+        >
+        <a href="{{ url_for('logout') }}"
+          ><i class="fas fa-sign-out-alt"></i> Logout</a
+        >
+      </div>
+      <p>
+        <i class="fab fa-discord"></i> Join our Discord community:
+        <a href="https://discord.gg/yzNbfvQSSX" target="_blank"
+          >https://discord.gg/yzNbfvQSSX</a
+        >
+      </p>
+      <div
+        id="cheer-up-message"
+        style="
+          display: none;
+          color: #28a745;
+          font-weight: bold;
+          background: rgba(40, 167, 69, 0.1);
+          padding: 10px;
+          border-radius: 8px;
+          margin-top: 10px;
+        "
+      ></div>
+    </div>
+    <video id="video" width="720px" height="560px" autoplay muted></video>
+  </body>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <script type="text/javascript" src="/static/js/face-api.min.js"></script>
+  <script type="text/javascript" src="/static/js/index.js"></script>
 </html>

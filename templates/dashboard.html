@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emotion Dashboard</title>
+    <link rel="stylesheet" href="/static/styles/style.css" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  </head>
+  <body>
+    <div class="header">
+      <h1><i class="fas fa-chart-bar"></i> Emotion Detection Dashboard</h1>
+      <div class="nav-links">
+        <a href="{{ url_for('home') }}"
+          ><i class="fas fa-home"></i> Back to Home</a
+        >
+        <a href="{{ url_for('logout') }}"
+          ><i class="fas fa-sign-out-alt"></i> Logout</a
+        >
+      </div>
+    </div>
+    <div class="dashboard">
+      <h2>
+        <i class="fas fa-user"></i> Emotion Dashboard for {{
+        current_user.username }}
+      </h2>
+      <a href="{{ url_for('export_emotions') }}" class="export-btn" download
+        ><i class="fas fa-download"></i> Export to CSV</a
+      >
+      <div id="emotions-list">
+        <!-- Emotions will be loaded here via JavaScript -->
+      </div>
+      <div id="current-emotion" class="emotion-card"></div>
+      <div id="recommendation" class="emotion-card"></div>
+      <div class="chart-container">
+        <h3><i class="fas fa-chart-line"></i> Emotion Over Time</h3>
+        <div id="emotion-over-time"></div>
+      </div>
+      <div class="chart-container">
+        <h3>
+          <i class="fas fa-clock"></i> Emotion Correlation with Time of Day
+        </h3>
+        <div id="correlation-time"></div>
+      </div>
+      <div class="chart-container">
+        <h3><i class="fas fa-chart-pie"></i> Emotion Frequency</h3>
+        <div id="emotion-frequency"></div>
+      </div>
+    </div>
+    <script>
+      async function loadDashboard() {
+        try {
+          const response = await fetch(
+            "/api/emotions?user_id={{ current_user.id }}"
+          );
+          const data = await response.json();
+          const emotions = data.emotions;
+          if (emotions.length === 0) {
+            document.getElementById("emotions-list").innerHTML =
+              "<p>No emotions recorded yet.</p>";
+            document.getElementById("current-emotion").innerHTML = "";
+            document.getElementById("recommendation").innerHTML = "";
+            return;
+          }
+
+          // Display table
+          let html =
+            "<table><thead><tr><th>Timestamp</th><th>Emotion</th><th>Probability</th></tr></thead><tbody>";
+          emotions.forEach((emotion) => {
+            html += `<tr><td>${emotion[0]}</td><td>${
+              emotion[1]
+            }</td><td>${emotion[2].toFixed(2)}</td></tr>`;
+          });
+          html += "</tbody></table>";
+          document.getElementById("emotions-list").innerHTML = html;
+
+          // Process data
+          const df = emotions.map((row) => ({
+            timestamp: new Date(row[0]),
+            emotion: row[1],
+            probability: row[2],
+          }));
+
+          // Current dominant emotion
+          const latest = df.reduce((acc, curr) => {
+            if (
+              !acc[curr.emotion] ||
+              acc[curr.emotion].timestamp < curr.timestamp
+            ) {
+              acc[curr.emotion] = curr;
+            }
+            return acc;
+          }, {});
+          const dominant = Object.values(latest).reduce((a, b) =>
+            a.probability > b.probability ? a : b
+          );
+          document.getElementById(
+            "current-emotion"
+          ).innerHTML = `<h3>Current Dominant Emotion: ${
+            dominant.emotion.charAt(0).toUpperCase() + dominant.emotion.slice(1)
+          } (${dominant.probability.toFixed(2)})</h3>`;
+
+          // Recommendations
+          const recommendations = {
+            happy:
+              "Great! The person seems happy. Encourage positive interactions.",
+            sad: "The person appears sad. Offer support and check in on their well-being.",
+            angry: "Anger detected. Give space and suggest calming activities.",
+            fear: "Fear detected. Provide reassurance and a safe environment.",
+            surprise:
+              "Surprise detected. Engage in conversation to understand the context.",
+            disgust:
+              "Disgust detected. Identify and remove the source of discomfort.",
+            neutral:
+              "Neutral expression. Continue monitoring or engage in light conversation.",
+          };
+          const rec =
+            recommendations[dominant.emotion] || "Monitor the situation.";
+          document.getElementById(
+            "recommendation"
+          ).innerHTML = `<h3>Response Recommendations</h3><p>${rec}</p>`;
+
+          // Emotion over time
+          const traces = {};
+          df.forEach((item) => {
+            if (!traces[item.emotion]) {
+              traces[item.emotion] = {
+                x: [],
+                y: [],
+                mode: "lines",
+                name: item.emotion,
+              };
+            }
+            traces[item.emotion].x.push(item.timestamp);
+            traces[item.emotion].y.push(item.probability);
+          });
+          const dataOverTime = Object.values(traces);
+          Plotly.newPlot("emotion-over-time", dataOverTime, {
+            title: "Emotion Probabilities Over Time",
+          });
+
+          // Correlation with time of day
+          df.forEach((item) => (item.hour = item.timestamp.getHours()));
+          const hourly = {};
+          df.forEach((item) => {
+            if (!hourly[item.hour]) hourly[item.hour] = {};
+            if (!hourly[item.hour][item.emotion])
+              hourly[item.hour][item.emotion] = [];
+            hourly[item.hour][item.emotion].push(item.probability);
+          });
+          const barData = [];
+          Object.keys(hourly).forEach((hour) => {
+            Object.keys(hourly[hour]).forEach((emotion) => {
+              const avg =
+                hourly[hour][emotion].reduce((a, b) => a + b, 0) /
+                hourly[hour][emotion].length;
+              barData.push({ hour: parseInt(hour), emotion, probability: avg });
+            });
+          });
+          const barTraces = {};
+          barData.forEach((item) => {
+            if (!barTraces[item.emotion]) {
+              barTraces[item.emotion] = {
+                x: [],
+                y: [],
+                name: item.emotion,
+                type: "bar",
+              };
+            }
+            barTraces[item.emotion].x.push(item.hour);
+            barTraces[item.emotion].y.push(item.probability);
+          });
+          Plotly.newPlot("correlation-time", Object.values(barTraces), {
+            title: "Average Emotion by Hour",
+            barmode: "group",
+          });
+
+          // Emotion frequency
+          const freq = {};
+          df.forEach(
+            (item) => (freq[item.emotion] = (freq[item.emotion] || 0) + 1)
+          );
+          const pieData = [
+            {
+              labels: Object.keys(freq),
+              values: Object.values(freq),
+              type: "pie",
+            },
+          ];
+          Plotly.newPlot("emotion-frequency", pieData, {
+            title: "Emotion Distribution",
+          });
+        } catch (error) {
+          console.error("Error loading dashboard:", error);
+          document.querySelector(".dashboard").innerHTML =
+            "<p>Error loading dashboard.</p>";
+        }
+      }
+      loadDashboard();
+      setInterval(loadDashboard, 5000); // Auto-refresh every 5 seconds like Streamlit
+    </script>
+  </body>
+</html>
