@@ -116,9 +116,56 @@
           };
           const rec =
             recommendations[dominant.emotion] || "Monitor the situation.";
+
+          // Song recommendations based on emotion
+          const songLinks = {
+            happy: [
+              '<a href="https://www.youtube.com/watch?v=ZbZSe6N_BXs" target="_blank">Happy - Pharrell Williams</a>',
+              '<a href="https://www.youtube.com/watch?v=y6Sxv-sUYtM" target="_blank">Uptown Funk - Mark Ronson ft. Bruno Mars</a>',
+              '<a href="https://www.youtube.com/watch?v=OPf0YbXqDm0" target="_blank">Can\'t Stop the Feeling! - Justin Timberlake</a>',
+            ],
+            sad: [
+              '<a href="https://www.youtube.com/watch?v=hLQl3WQQoQ0" target="_blank">Someone Like You - Adele</a>',
+              '<a href="https://www.youtube.com/watch?v=9E6b3swbnWg" target="_blank">Hurt - Johnny Cash</a>',
+              '<a href="https://www.youtube.com/watch?v=4N3N1MlvVc4" target="_blank">The Night We Met - Lord Huron</a>',
+            ],
+            angry: [
+              '<a href="https://www.youtube.com/watch?v=5X-Mrc2l1d0" target="_blank">Break Stuff - Limp Bizkit</a>',
+              '<a href="https://www.youtube.com/watch?v=1lyu1KKwC74" target="_blank">Killing in the Name - Rage Against the Machine</a>',
+              '<a href="https://www.youtube.com/watch?v=8SbUC-UaAxE" target="_blank">You Give Love a Bad Name - Bon Jovi</a>',
+            ],
+            fear: [
+              '<a href="https://www.youtube.com/watch?v=sOnqjkJTMaA" target="_blank">Thriller - Michael Jackson</a>',
+              '<a href="https://www.youtube.com/watch?v=4Z9WVZddH9w" target="_blank">The Monster - Eminem ft. Rihanna</a>',
+              '<a href="https://www.youtube.com/watch?v=0J2QdDbelmY" target="_blank">Ghostbusters - Ray Parker Jr.</a>',
+            ],
+            surprise: [
+              '<a href="https://www.youtube.com/watch?v=0NKUpo_xKyQ" target="_blank">Surprise - Mariah Carey</a>',
+              '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">Never Gonna Give You Up - Rick Astley</a>',
+              '<a href="https://www.youtube.com/watch?v=kJQP7kiw5Fk" target="_blank">Psycho Killer - Talking Heads</a>',
+            ],
+            disgust: [
+              '<a href="https://www.youtube.com/watch?v=hTWKbfoikeg" target="_blank">Smells Like Teen Spirit - Nirvana</a>',
+              '<a href="https://www.youtube.com/watch?v=9bZkp7q19f0" target="_blank">American Idiot - Green Day</a>',
+              '<a href="https://www.youtube.com/watch?v=5abamRO41fE" target="_blank">Basket Case - Green Day</a>',
+            ],
+            neutral: [
+              '<a href="https://www.youtube.com/watch?v=tAGnKpE4NCI" target="_blank">Nothing Else Matters - Metallica</a>',
+              '<a href="https://www.youtube.com/watch?v=6hzrDeceEKc" target="_blank">Wonderwall - Oasis</a>',
+              '<a href="https://www.youtube.com/watch?v=1w7OgIMMRc4" target="_blank">Bohemian Rhapsody - Queen</a>',
+            ],
+          };
+          const songs = songLinks[dominant.emotion] || [];
+          const songHtml =
+            songs.length > 0
+              ? `<h4>Song Recommendations:</h4><ul>${songs
+                  .map((song) => `<li>${song}</li>`)
+                  .join("")}</ul>`
+              : "";
+
           document.getElementById(
             "recommendation"
-          ).innerHTML = `<h3>Response Recommendations</h3><p>${rec}</p>`;
+          ).innerHTML = `<h3>Response Recommendations</h3><p>${rec}</p>${songHtml}`;
 
           // Emotion over time
           const traces = {};
